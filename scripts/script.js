@@ -7,6 +7,8 @@
 
       var secondsProps, minutesProps, hoursProps, daysOfMonthProps, monthsProps, daysOfWeekProps;
 
+      var dontChangeTabs = false;
+
       function initUnits() 
       {
       	secondsProps = new unit(1,0,[],"*");
@@ -53,38 +55,48 @@
 	      		var props = window[value + "Props"];
 	      		if (props.mode == 3)
 	      		{
-	      			props.units.sort(function(a, b){ return a > b ? +1 : a < b ? -1 : 0;});
-	      			var unitTxt = props.units.toString();
-	      			/*
-	      			var unitTxt = "";
-	      			var prev = -2;
-	      			var isSequence = false;
-	      			for (var i=0; i<props.units.length; i++)
+	      			console.log("mode == 3: " + value);
+	      			if (units.length > 0)
 	      			{
-	      				if(parseInt(props.units[i]-1) == prev && i < props.units.length-1)
-	      				{
-	      					isSequence = true;
-	      				}
-	      				else
-	      				{
-	      					if (isSequence)
-	      					{
-	      						unitTxt += "-";
-	      						isSequence = false;
-	      					}
-	      					else if(unitTxt.length != 0)
-	      					{
-	      						unitTxt += ","
-	      					}
-	      					unitTxt += props.units[i];
-	      				}
-	      				prev = parseInt(props.units[i]);
+	      				props.units.sort(function(a, b){ return a > b ? +1 : a < b ? -1 : 0;});
+	      				var unitTxt = props.units.toString();
+	      			
+		      			/*
+		      			var unitTxt = "";
+		      			var prev = -2;
+		      			var isSequence = false;
+		      			for (var i=0; i<props.units.length; i++)
+		      			{
+		      				if(parseInt(props.units[i]-1) == prev && i < props.units.length-1)
+		      				{
+		      					isSequence = true;
+		      				}
+		      				else
+		      				{
+		      					if (isSequence)
+		      					{
+		      						unitTxt += "-";
+		      						isSequence = false;
+		      					}
+		      					else if(unitTxt.length != 0)
+		      					{
+		      						unitTxt += ","
+		      					}
+		      					unitTxt += props.units[i];
+		      				}
+		      				prev = parseInt(props.units[i]);
+		      			}
+		      			*/
+		      			props.text = unitTxt;
+		      			console.log(unitTxt);
 	      			}
-	      			*/
-	      			props.text = unitTxt;
 	      		}
 
-	      		txt += props.text + " ";
+	      		txt += props.text;
+	      		if (index < units.length - 1)
+	      		{
+	      			txt += " ";
+	      		}
 
 	      		$.updateUnitTabsExpression(value);
 	      		$.updateAccordionExpression(value);
@@ -95,7 +107,7 @@
 
 		$.fillTriggerDatetimes();
 
-		$.updateCronGui();
+		//$.updateCronGui();
 
       }
 
@@ -109,7 +121,31 @@
 	      		var unitPropsName = value + "Props";
 	      		$.putAsteriskOnTab(window[unitPropsName].mode, value);
 	      		$.setGuiUnitValues(value, window[unitPropsName].text);
+	      		$.setActiveUnitTab(value, window[unitPropsName].mode);
 		   });
+      }
+
+      $.setActiveUnitTab = function(unit, mode)
+      {
+      	if(dontChangeTabs)
+      	{
+      		return;
+      	}
+
+      	var tabName;
+      	if(mode == 1)
+      	{
+      		tabName = "tabEvery_" + unit;
+      	}
+      	else if(mode == 2)
+      	{
+      		tabName = "tabEach_" + unit;
+      	}
+      	else if(mode == 3)
+      	{
+      		tabName = "tabSelected_" + unit;
+      	}
+      	$("#" + tabName).click();
       }
 
       $.setGuiUnitValues = function(unit, txt)
@@ -257,6 +293,7 @@
       	}
 
       	$.updateCronExpression();
+      	$.updateCronGui();
 	  }
 
 	  $.resetSlider = function(unit)
@@ -326,7 +363,7 @@
              		{
              			$('#selectHours').append('<button id="selectedUnit_hours' + (i*10+j) + '" type="button" class="btn btn-default selectedUnitButton">' + (i*10+j) + '</button>');
              		}
-             		if(i<4 && !(i == 3 && j>1))
+             		if(i<4 && !(i == 3 && j>1) && !(i==0 && j==0))
              		{
              			$('#selectDays').append('<button id="selectedUnit_daysOfMonth' + (i*10+j) + '" type="button" class="btn btn-default selectedUnitButton">' + (i*10+j) + '</button>');
              		}
@@ -347,7 +384,7 @@
          	var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
          	for (var i=0; i < months.length; i++)
          	{
-         		$('#selectMonths').append('<button id="selectedUnit_months' + (i) + '" type="button" class="btn btn-default selectedUnitButton bigUnitButton">' + months[i] + '</button>');
+         		$('#selectMonths').append('<button id="selectedUnit_months' + (i+1) + '" type="button" class="btn btn-default selectedUnitButton bigUnitButton">' + months[i] + '</button>');
          		if (i != 0 && (i+1) % 6 == 0)
          		{
          			$('#selectMonths').append('<br>');
@@ -398,9 +435,33 @@
 						});
 						*/
     					unitProps.units.splice(index, 1);
-    					$.setmode(3, unit);
+    					
     					$(this).removeClass('btn-success').addClass('btn-default');
     					//alert(unit);
+
+    					if(unitProps.units.length > 0)
+    					{
+    						$.setmode(3, unit);
+    					}
+    					else
+    					{
+    						dontChangeTabs = true;
+    						$.setmode(1, unit);
+    						
+    						//console.log("UNIT=" + unit);
+    						unitProps.mode = 1;
+    						unitProps.interval = 0;
+	      					unitProps.units = [];
+	      					unitProps.text = "*";
+
+    						$("button[id*='everyUnit_" + unit + "']").removeClass('btn-default').addClass('btn-success disabled');
+
+    						$.updateCronExpression();
+    						$.putAsteriskOnTab(unitProps.mode, unit);
+    						$.setGuiUnitValues(unit, unitProps.txt);
+    						$.setActiveUnitTab(unit, 3);
+    						dontChangeTabs = false;
+    					}
 					}
 				}
 				unitProps.units.sort(function(a, b){return a > b ? +1 : a < b ? -1 : 0;});
@@ -433,10 +494,12 @@
 
 				$("#secondsPanel").toggleClass('hidden');
 				$.updateCronExpression();
+				$.updateCronGui();
 				
 			});
 
 			$.updateCronExpression();
+			$.updateCronGui();
 
 
 			//$(function(){ alert("test"); });
@@ -507,8 +570,6 @@
 			var isOk = isCronOk(editField.value);
 
 			console.log("expression is " + isOk);
-
-
 			
 			if(isOk)
 			{
@@ -560,10 +621,7 @@
 	       		});
 			}
 			
-			*/
-
-
-       		
+			*/	
 		}
 
 		document.getElementById("editButton").addEventListener("click", function() {
@@ -589,6 +647,7 @@
 	                	var cronExpr = dialogRef.getModalBody().find('input').val();
 	                	$("#cronExpressionValue").html(cronExpr);
 	                	var splits = cronExpr.split(" ");
+	                	console.log("SPlits: " + splits.toString());
 	                	var i;
 	                	if (isSecondsEnabled)
 	                	{
@@ -604,6 +663,7 @@
 	                		var unitPropsName = units[i] + "Props";
 	                		var txt = splits[j];
 	                		window[unitPropsName].text = txt;
+	                		console.log(unitPropsName + ".text = " +txt);
 
 	                		if(txt.includes("*") && !txt.includes("/"))
       						{
@@ -618,16 +678,17 @@
       						{
       							window[unitPropsName].mode = 3;
       							var unitSplits = txt.split(",");
+      							console.log("Unitsplits: " + unitSplits);
       							var unitsArray = [];
-      							for(var j=0; j<unitSplits.length; j++)
+      							for(var k=0; k<unitSplits.length; k++)
       							{
-      								if (!unitSplits[j].includes("-"))
+      								if (!unitSplits[k].includes("-"))
       								{
-      									unitsArray[unitsArray.length] = parseInt(unitSplits[j]);
+      									unitsArray[unitsArray.length] = parseInt(unitSplits[k]);
       								}
       								else
       								{
-      									var splits2 = unitSplits[j].split("-");
+      									var splits2 = unitSplits[k].split("-");
 										for (var k=parseInt(splits2[0]); k<=parseInt(splits2[1]); k++)
 										{
 											unitsArray[unitsArray.length] = k;
@@ -638,10 +699,13 @@
       							window[unitPropsName].units = unitsArray;
       						}
 
-      						i++;j++;
+      						i++; j++;
 	                	}
 
+
+
 	                	$.updateCronExpression();
+	                	$.updateCronGui();
 	                	dialogRef.close();
 	                }
 	            },
@@ -654,17 +718,12 @@
 	            }
 	            ],
 	            cssClass: 'editcron-dialog'	            ,
-        	});
-
-			
+        	});	
 
 		});
         
 
-
 		document.getElementById("resetButton").addEventListener("click", function() {
-
-
 
 		BootstrapDialog.show({
             title: "<span class='glyphicon glyphicon-question-sign glyphIconDialogTitle'></span>Confirm reset",
@@ -688,29 +747,12 @@
                 }
             }]
         });
-			/*
-			BootstrapDialog.confirm('Do you really want to reset the Cron Expression?', function(result){
-            if(result) {
-                initUnits();
-		   		$.each(units, function( index, value ) {
-			   		$.resetSlider(value);
-		      		$.resetUnitButtons(value);
-		   		});
-		   		$.updateCronExpression(); 
-		   		$.updateCronGui();
-            }
-
-           
-        	});
- 			*/
 
 		});
 
 		document.getElementById("copyButton").addEventListener("click", function() {
 		    copyToClipboard(document.getElementById("cronExpressionValue"));
 		});
-
-
 
 		function copyToClipboard(elem) {
 			  // create hidden text element, if it doesn't already exist
