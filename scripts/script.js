@@ -31,19 +31,7 @@
 
       $.updateCronExpression = function()
       {
-      	/*
-      	var txt;
-      	if(isSecondsEnabled)
-      	{
-      		txt = secondsProps.text + " ";
-      	}
-      	else
-      	{
-      		txt = "";
-      	}
-      	txt += minutesProps.text + " " + hoursProps.text + " " + daysOfMonthProps.text + " " + monthsProps.text + " " + daysOfWeekProps.text;
-      	$("#cronExpressionValue").html(txt);
-		*/
+
       	var txt = "";
       	$.each(units, function( index, value ) {
       		if (!isSecondsEnabled && value === "seconds")
@@ -59,36 +47,41 @@
 	      			if (units.length > 0)
 	      			{
 	      				props.units.sort(function(a, b){ return a > b ? +1 : a < b ? -1 : 0;});
-	      				var unitTxt = props.units.toString();
-	      			
-		      			/*
-		      			var unitTxt = "";
-		      			var prev = -2;
-		      			var isSequence = false;
-		      			for (var i=0; i<props.units.length; i++)
-		      			{
-		      				if(parseInt(props.units[i]-1) == prev && i < props.units.length-1)
-		      				{
-		      					isSequence = true;
-		      				}
-		      				else
-		      				{
-		      					if (isSequence)
+
+	      				//var unitTxt = props.units.toString();
+	      				var unitTxt = "";
+
+	      				var isSequence = false;
+	      				for (var i=0; i<props.units.length; i++)
+	      				{
+	      					var current = props.units[i];
+	      					if (i<props.units.length - 1)
+	      					{
+	      						var next = props.units[i+1];
+
+		      					if (next === (current+1))
 		      					{
-		      						unitTxt += "-";
+		      						if(isSequence === false)
+		      						{
+		      							isSequence = true;
+		      							unitTxt += current + "-";
+		      						}
+		      					}
+		      					else
+		      					{
 		      						isSequence = false;
+		      						unitTxt += current + ",";
 		      					}
-		      					else if(unitTxt.length != 0)
-		      					{
-		      						unitTxt += ","
-		      					}
-		      					unitTxt += props.units[i];
-		      				}
-		      				prev = parseInt(props.units[i]);
-		      			}
-		      			*/
+	      					}
+	      					else
+	      					{
+	      						unitTxt += current;
+	      					}
+
+	      				}
+
 		      			props.text = unitTxt;
-		      			console.log(unitTxt);
+		      			//console.log(unitTxt);
 	      			}
 	      		}
 
@@ -555,10 +548,69 @@
 			}
 
 			var splits = cronText.split(" ");
+			loop1:
+			for (var i=0; i<splits.length; i++)
+			{
+				if(splits[i] === "*")
+				{
+					continue;
+				}
+
+				if(splits[i].length > 1 && splits[i].substring(0,2) === "*/")
+				{
+					if(i > unitsNo - 4)
+					{
+						console.log(i + ">" + (unitsNo-4));
+						return false;
+					}
+					if(isNumber(splits[i].substring(2,splits[i].length)) && !splits[i].includes("-"))
+					{
+						continue;
+					}
+					else
+					{
+						return false;
+					}
+				}
+
+
+				var reg2 = new RegExp('^[0-9,\-]+$');
+				if (!reg2.test(splits[i]))
+				{
+					console.log("reg2");
+					return false;
+				}
+				var unitSplits = splits[i].split(",");
+				console.log(unitSplits.toString() + " " + unitSplits.length);
+				if(unitSplits.length === 0)
+				{
+					return false;
+				}
+				if(splits[i].substring(0,1) === "," || splits[i].substring(splits[i].length-1,splits[i].length) == ",")
+				{
+					return false;
+				}
+				for (var j=0; j<unitSplits.length; j++)
+				{
+					console.log(unitSplits[j].toString());
+					if(isNumber(unitSplits[j]))
+					{
+						continue loop1;
+					}
+					else
+					{
+						return false;
+					}
+				}
+
+				return false;
+			}
 
 
 			return true;
 		}
+
+		function isNumber(obj) { return !isNaN(parseFloat(obj)) }
 
 		function validateCron()
 		{
@@ -689,13 +741,13 @@
       								else
       								{
       									var splits2 = unitSplits[k].split("-");
-										for (var k=parseInt(splits2[0]); k<=parseInt(splits2[1]); k++)
+										for (var m=parseInt(splits2[0]); m<=parseInt(splits2[1]); m++)
 										{
-											unitsArray[unitsArray.length] = k;
+											unitsArray[unitsArray.length] = m;
 										}
       								}	
       							}
-      							
+      							console.log("UnitsArray: " + unitsArray.toString());
       							window[unitPropsName].units = unitsArray;
       						}
 
