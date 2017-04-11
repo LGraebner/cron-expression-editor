@@ -527,13 +527,16 @@
 			console.log(units.length);
 			//check 5 units
 			var unitsNo;
+			var hourPos;
 			if(!isSecondsEnabled)
 			{
 				unitsNo = 5;
+				hourPos =1;
 			}
 			else
 			{
 				unitsNo = 6;
+				hourPos = 2;
 			}
 
 			if (units.length != unitsNo)
@@ -558,14 +561,36 @@
 
 				if(splits[i].length > 1 && splits[i].substring(0,2) === "*/")
 				{
-					if(i > unitsNo - 4)
+					if((isSecondsEnabled && i > 2) || (!isSecondsEnabled && i > 1))
 					{
 						console.log(i + ">" + (unitsNo-4));
 						return false;
 					}
 					if(isNumber(splits[i].substring(2,splits[i].length)) && !splits[i].includes("-"))
 					{
-						continue;
+
+						var n = parseInt(splits[i].substring(2,splits[i].length));
+						var result = false;
+
+						console.log(n + " " + hourPos);
+						if (i===hourPos) 
+						{
+							if (n >= 0 && n <= 23)
+							{
+								continue;
+							}
+							else
+							{
+								return false;
+							}
+						}
+
+						if (n >= 0 && n <= 60)
+						{
+							continue;
+						}
+
+						return false;
 					}
 					else
 					{
@@ -590,17 +615,84 @@
 				{
 					return false;
 				}
+
+				var result = false;
 				for (var j=0; j<unitSplits.length; j++)
 				{
 					console.log(unitSplits[j].toString());
 					if(isNumber(unitSplits[j]))
 					{
-						continue loop1;
+						
+						if(!unitSplits[j].includes("-"))
+						{
+							console.log("hourPos = " + hourPos + " " + unitSplits[j].toString() + " " + i);
+							var n = parseInt(unitSplits[j]);
+							console.log("n = " + n);
+							if (i === hourPos)
+							{
+								if (n >= 0 && n <= 23)
+								{
+									result = true;
+								}
+								else
+								{
+									return false;
+								}
+							}
+							else
+							{
+								if (n >= 0 && n <= 60)
+								{
+									result = true;
+								}
+								else
+								{
+									return false;
+								}
+							}
+						}
+						else
+						{
+							var rangeSplits = unitSplits[j].split("-");
+							for (var k=0; k < rangeSplits.length; k++)
+							{
+								var n = parseInt(rangeSplits[k]);
+								if (i === hourPos)
+								{
+									if (n >= 0 && n <= 23)
+									{
+										result = true;
+									}
+									else
+									{
+										return false;
+									}
+								}
+								else
+								{
+									if (n >= 0 && n <= 60)
+									{
+										result = true;
+									}
+									else
+									{
+										return false;
+									}
+								}
+							}
+						}
+
 					}
 					else
 					{
 						return false;
 					}
+				}
+
+				console.log("result = " + result);
+				if (result)
+				{
+					continue loop1;
 				}
 
 				return false;
@@ -778,8 +870,8 @@
 		document.getElementById("resetButton").addEventListener("click", function() {
 
 		BootstrapDialog.show({
-            title: "<span class='glyphicon glyphicon-question-sign glyphIconDialogTitle'></span>Confirm reset",
-            message: 'Do you really want to reset the Cron Expression?',
+            title: "<span class='glyphicon glyphicon-question-sign glyphIconDialogTitle'></span>Confirmation",
+            message: 'Really reset the Cron Expression?',
             buttons: [{
                 label: 'Cancel',
                 action: function(dialog) {
@@ -804,6 +896,18 @@
 
 		document.getElementById("copyButton").addEventListener("click", function() {
 		    copyToClipboard(document.getElementById("cronExpressionValue"));
+
+		    BootstrapDialog.show({
+            title: "<span class='glyphicon glyphicon-info-sign glyphIconDialogTitle'></span>Information",
+            message: 'Copied cron expression <b>[ ' + document.getElementById("cronExpressionValue").textContent + ' ]</b> to the clipboard!' ,
+            buttons: [{
+                label: 'OK',
+                action: function(dialog) {
+                    dialog.close();
+                }
+            }]
+        });
+
 		});
 
 		function copyToClipboard(elem) {

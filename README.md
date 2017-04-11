@@ -1,4 +1,4 @@
-Graphical easy to use Cron Expresion Editor in HTML/Javascript.<br>
+Graphical easy to use Cron Expression Editor in HTML/Javascript.<br>
 Optimized for the Chrome Webbrowser.<br>
 Little project of mine to get to know some more Javascript and CSS.<br> <br>
 
